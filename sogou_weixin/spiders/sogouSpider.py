@@ -292,7 +292,7 @@ class sogouSpider(scrapy.Spider):
             t = m.group()[0]
             return (datetime.datetime.now() - datetime.timedelta(seconds=int(t))).strftime("%Y-%m-%d %H:%M:%S")
 
-        return None
+        return time_str
 
     def getDriver(self):
         self.driver = webdriver.Firefox()
