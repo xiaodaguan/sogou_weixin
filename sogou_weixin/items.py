@@ -32,7 +32,6 @@ class SogouWeixinItem(scrapy.Item):
     avatar = scrapy.Field()
     img = scrapy.Field()
     img_brief = scrapy.Field()
-    gongzhong_id = scrapy.Field() #
     read_num_24hours = scrapy.Field()
     like_num_24hours = scrapy.Field()
     update_time = scrapy.Field()
