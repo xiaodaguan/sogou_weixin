@@ -51,6 +51,8 @@ class sogouWeixinPaperSpider(sogou_weixin):
                         pubtime = self.switch_time(str_pubtime)
 
                         item = items.SogouWeixinItem()
+                        item['crawler'] = self.name
+
                         # item['page_source'] = html
                         item['brief'] = brief
                         item['weixin_name'] = weixin_name

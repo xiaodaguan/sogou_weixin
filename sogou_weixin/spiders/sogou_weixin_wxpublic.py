@@ -95,6 +95,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             assert paper['app_msg_ext_info'] != None, "paper info not found!"
             assert paper['comm_msg_info'] != None, "comm info not found!"
             item = SogouWeixinItem()
+            item['crawler'] = self.name
             item['title'] = paper['app_msg_ext_info']['title']
             item['url'] = "http://mp.weixin.qq.com%s" %  paper['app_msg_ext_info']['content_url'].encode("utf-8").replace("\\","").replace("&amp;","&").replace("&amp;","&")
             pubtimeStamp = paper['comm_msg_info']['datetime']

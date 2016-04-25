@@ -9,8 +9,11 @@ import scrapy
 
 
 class SogouWeixinItem(scrapy.Item):
+
+
     # define the fields for your item here like:
     # name = scrapy.Field()
+    crawler = scrapy.Field()
     title = scrapy.Field()
     author = scrapy.Field()
     site_id = scrapy.Field()
