@@ -10,9 +10,7 @@ from scrapy import Spider
 from scrapy import log
 from selenium import webdriver
 
-
 class sogou_weixin(Spider):
-
     def __init__(self, **kwargs):
 
         # proxies
@@ -32,7 +30,9 @@ class sogou_weixin(Spider):
             self.proxies[parts.group(1) + parts.group(3)] = user_pass
 
         fin.close()
+
     def getNormalDriver(self):
+        # self.driver = webdriver.Remote(desired_capabilities=webdriver.DesiredCapabilities.HTMLUNIT)
         self.driver = webdriver.Firefox()
         self.driver.maximize_window()
 
@@ -63,7 +63,6 @@ class sogou_weixin(Spider):
             self.getProxyDriver()
         else:
             self.getNormalDriver()
-
 
     def switch_time(self, time_str):
         '''
@@ -105,7 +104,6 @@ class sogou_weixin(Spider):
             return int(WEBDRIVER_DELAY)
         print("check settings:WEBDRIVER_DELAY, current conf: %s" % WEBDRIVER_DELAY)
 
-
     def close_unuse_wnds(self):
         '''
         clear unuse window handles, release memory
@@ -142,7 +140,6 @@ class sogou_weixin(Spider):
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 
         return True
-
 
     def driver_get_or_retry(self, url_to_get):
 

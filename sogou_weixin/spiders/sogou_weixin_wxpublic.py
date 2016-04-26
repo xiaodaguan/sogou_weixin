@@ -12,12 +12,15 @@ from sogou_weixin.spiders.sogou_weixin import sogou_weixin
 import re
 import time
 
+
 class wxpublic_info:
+    oracle_id = 0
     name = None
     weixin_name = None
     category_code = 0
 
-    def __init__(self, name, weixin_name, category_code):
+    def __init__(self, oracle_id, name, weixin_name, category_code):
+        self.oracle_id = oracle_id
         self.name = name
         self.weixin_name = weixin_name
         self.category_code = category_code
@@ -44,19 +47,22 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         with open("keywords.in", "r") as f:
             self.search_keywords = f.readlines()
         for search_key in self.search_keywords:
+            if search_key.startswith("#") or not len(search_key): continue
             search_key = search_key.replace("\n", "")
-            name = search_key.split(",")[0]
-            weixin_name = search_key.split(",")[1]
-            category_code = search_key.split(",")[2]
-            info = wxpublic_info(name, weixin_name, category_code)
+            assert len(search_key.split(",")) ==4, "err in keywords.in"
+            oracle_id = int(search_key.split(",")[0])
+            name = search_key.split(",")[1]
+            weixin_name = search_key.split(",")[2]
+            category_code = int(search_key.split(",")[3]) if len(search_key.split(",")[3]) else 0
+            info = wxpublic_info(oracle_id, name, weixin_name, category_code)
             self.wxpublic_info_list.append(info)
             pass
 
         # set searchkey, category_code/1/2/3... for item
         for info in self.wxpublic_info_list:
-            # todo webdriver get start url
+            # webdriver get start url
             # 搜狗搜索结果页处理
-            # todo 寻找匹配公众号
+            # 寻找匹配公众号
             start_url = "http://weixin.sogou.com/weixin?type=1&query=%s" % info.weixin_name
 
             self.driver_get_or_retry(start_url)
@@ -71,7 +77,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             if not url:
                 log.msg("weixin public account not found %s:%s" % (info.weixin_name, info.name))
                 continue
-            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'name':info.name,'weixin_name':info.weixin_name,'category_code':info.category_code}})
+            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
 
     def parse_list(self, response):
         '''
@@ -82,14 +88,12 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
 
         account_info = response.meta['account_info']
-        # todo
 
-        m = re.search(r"var msgList = '{.*}';",response.body)
-        json_list_str = m.group(0).replace("var msgList = '{","{").replace("}';","}").replace("&quot;",'"')
+        m = re.search(r"var msgList = '{.*}';", response.body)
+        json_list_str = m.group(0).replace("var msgList = '{", "{").replace("}';", "}").replace("&quot;", '"')
         paper_list = json.loads(json_list_str)['list']
 
-
-        assert paper_list != None , "check json!!!"
+        assert paper_list != None, "check json!!!"
         for paper in paper_list:
             # parse them
             assert paper['app_msg_ext_info'] != None, "paper info not found!"
@@ -97,13 +101,12 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item = SogouWeixinItem()
             item['crawler'] = self.name
             item['title'] = paper['app_msg_ext_info']['title']
-            item['url'] = "http://mp.weixin.qq.com%s" %  paper['app_msg_ext_info']['content_url'].encode("utf-8").replace("\\","").replace("&amp;","&").replace("&amp;","&")
+            item['url'] = "http://mp.weixin.qq.com%s" % paper['app_msg_ext_info']['content_url'].encode("utf-8").replace("\\", "").replace("&amp;", "&").replace("&amp;", "&")
             pubtimeStamp = paper['comm_msg_info']['datetime']
-            item['pubtime'] = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(pubtimeStamp))
+            item['pubtime'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(pubtimeStamp))
             item['author'] = account_info['name']
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
-
 
             yield scrapy.Request(url=item['url'], callback=self.parse_item, meta={'item': item})
 
