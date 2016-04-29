@@ -50,10 +50,12 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             if search_key.startswith("#") or not len(search_key): continue
             search_key = search_key.replace("\n", "")
             assert len(search_key.split(",")) ==4, "err in keywords.in"
+
             oracle_id = int(search_key.split(",")[0])
             name = search_key.split(",")[1]
             weixin_name = search_key.split(",")[2]
             category_code = int(search_key.split(",")[3]) if len(search_key.split(",")[3]) else 0
+
             info = wxpublic_info(oracle_id, name, weixin_name, category_code)
             self.wxpublic_info_list.append(info)
             pass
@@ -77,7 +79,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             if not url:
                 log.msg("weixin public account not found %s:%s" % (info.weixin_name, info.name))
                 continue
-            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
+            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'oracle_id':info.oracle_id,'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
 
     def parse_list(self, response):
         '''
@@ -100,6 +102,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             assert paper['comm_msg_info'] != None, "comm info not found!"
             item = SogouWeixinItem()
             item['crawler'] = self.name
+            item['gongzhong_id'] = account_info['oracle_id']
             item['title'] = paper['app_msg_ext_info']['title']
             item['url'] = "http://mp.weixin.qq.com%s" % paper['app_msg_ext_info']['content_url'].encode("utf-8").replace("\\", "").replace("&amp;", "&").replace("&amp;", "&")
             pubtimeStamp = paper['comm_msg_info']['datetime']

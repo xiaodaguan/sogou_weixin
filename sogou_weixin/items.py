@@ -46,4 +46,5 @@ class SogouWeixinItem(scrapy.Item):
     content_html = scrapy.Field()
     weixin_name = scrapy.Field()
     page_source = scrapy.Field()
+    gongzhong_id = scrapy.Field()
     pass
