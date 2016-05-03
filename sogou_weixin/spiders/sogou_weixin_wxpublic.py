@@ -49,7 +49,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         for search_key in self.search_keywords:
             if search_key.startswith("#") or not len(search_key): continue
             search_key = search_key.replace("\n", "")
-            assert len(search_key.split(",")) ==4, "err in keywords.in"
+            assert len(search_key.split(",")) == 4, "err in keywords.in"
 
             oracle_id = int(search_key.split(",")[0])
             name = search_key.split(",")[1]
@@ -79,7 +79,8 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             if not url:
                 log.msg("weixin public account not found %s:%s" % (info.weixin_name, info.name))
                 continue
-            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'oracle_id':info.oracle_id,'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
+            log.msg("yield request: %s" % url)
+            yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'oracle_id': info.oracle_id, 'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
 
     def parse_list(self, response):
         '''
@@ -88,7 +89,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         :param response:
         :return:
         '''
-
+        log.msg("parsing list: %s" % response.url)
         account_info = response.meta['account_info']
 
         m = re.search(r"var msgList = '{.*}';", response.body)
@@ -111,10 +112,15 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
 
+            log.msg("yield request: %s" % item['url'])
             yield scrapy.Request(url=item['url'], callback=self.parse_item, meta={'item': item})
 
     def parse_item(self, response):
+
+
+
         item = response.meta['item']
+        log.msg("parsing item: %s" % item['title'])
         # print("parsing detail page %s ... " % item['title'])
 
         content = response.xpath("//div[@id='page-content']//text()").extract()

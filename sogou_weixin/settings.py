@@ -7,7 +7,7 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
-LOG_LEVEL = 'DEBUG'
+LOG_LEVEL = 'INFO'
 DOWNLOAD_DELAY = 15
 RETRY_TIMES = 3
 BOT_NAME = 'sogou_weixin'
