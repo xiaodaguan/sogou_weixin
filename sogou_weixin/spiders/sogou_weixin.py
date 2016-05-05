@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from pyvirtualdisplay import Display
 
 import datetime
 import random
@@ -10,9 +11,11 @@ from scrapy import Spider
 from scrapy import log
 from selenium import webdriver
 
+
 class sogou_weixin(Spider):
     def __init__(self, **kwargs):
-
+        self.display = Display(visible=0, size=(1280, 1024))
+        self.display.start()
         # proxies
         self.proxy_list = "proxys.txt"
         fin = open(self.proxy_list)
