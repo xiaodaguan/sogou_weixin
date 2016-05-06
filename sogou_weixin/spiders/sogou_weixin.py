@@ -9,13 +9,17 @@ import time
 
 from scrapy import Spider
 from selenium import webdriver
+import platform
 
 
 class sogou_weixin(Spider):
     def __init__(self, **kwargs):
-        self.display = Display(visible=0, size=(1280, 1024))
-        self.display.start()
-        self.logger.info("display started.")
+
+        self.client_sys_info = platform.platform().lower()
+        if self.client_sys_info.find("windows") == -1 :
+            self.display = Display(visible=0, size=(1280, 1024))
+            self.display.start()
+            self.logger.info("display started.")
 
         # proxies
         self.proxy_list = "proxys.txt"
@@ -36,8 +40,9 @@ class sogou_weixin(Spider):
         fin.close()
 
     def close(spider, reason):
-        spider.display.stop()
-        spider.logger.info("display stoped.")
+        if spider.client_sys_info.find("windows") == -1 :
+            spider.display.stop()
+            spider.logger.info("display stoped.")
 
     def getNormalDriver(self):
         # self.driver = webdriver.Remote(desired_capabilities=webdriver.DesiredCapabilities.HTMLUNIT)
