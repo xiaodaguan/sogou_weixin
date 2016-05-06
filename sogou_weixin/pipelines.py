@@ -5,9 +5,10 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import pymongo
-from scrapy import log
 from scrapy.exceptions import DropItem
+import logging
 
+logger = logging.getLogger('my_pipelines')
 
 class SogouPipeline(object):
     def __init__(self, mongo_uri, mongo_db, spider_name):
@@ -19,7 +20,7 @@ class SogouPipeline(object):
         # self.collection = db['wechat_article_info']
         self.collection = db['%s_info' % spider_name]
         # item crawled before
-        log.msg("loading crawled items before...")
+        logger.info("loading crawled items before...")
         self.url_crawled = set()
         pipeline = [
             {
@@ -33,7 +34,7 @@ class SogouPipeline(object):
         for i, item in enumerate(result):
             self.url_crawled.add(item['_id'])
             if i % 1000 == 0: print(i)
-        log.msg("read %d crawled items" % len(result))
+        logger.info("read %d crawled items" % len(result))
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -67,7 +68,7 @@ class SogouPipeline(object):
         if valid:
             self.collection.insert(dict(item))
             self.url_crawled.add(item['url'])
-            log.msg("item wrote to mongodb %s / %s: %s" % ('wechatdb', 'wechat_article_info', item['title']))
+            logger.info("item wrote to mongodb %s / %s: %s" % ('wechatdb', 'wechat_article_info', item['title']))
         else:
-            log.msg("item droped %s " % item['title'])
+            logger.info("item droped %s " % item['title'])
         return item

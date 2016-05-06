@@ -130,15 +130,15 @@ class sogou_weixin(Spider):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信公众号文章") > -1:
-            log.msg("成功获得列表页.")
+            self.logger.info("成功获得列表页.")
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
-            log.msg("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
+            self.logger.info("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
             self.retry_time = 0
             return False
-        log.msg("未成功获得列表页,将重试...")
-        log.msg()
+        self.logger.info("未成功获得列表页,将重试...")
+        self.logger.info()
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 
@@ -152,7 +152,7 @@ class sogou_weixin(Spider):
 
         self.retry_time = 0
         while self.need_retry_list():
-            log.msg("retrying... [%d]" % self.retry_time)
+            self.logger.info("retrying... [%d]" % self.retry_time)
             self.retry_time += 1
 
             self.driver.get(url_to_get)

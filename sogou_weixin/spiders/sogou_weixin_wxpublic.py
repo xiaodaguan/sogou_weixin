@@ -4,7 +4,6 @@ import hashlib
 from urllib import unquote
 
 import scrapy
-from scrapy import log
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 import json
 from sogou_weixin.items import SogouWeixinItem
@@ -77,9 +76,9 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             except WebDriverException:
                 url = None
             if not url:
-                log.msg("weixin public account not found %s:%s" % (info.weixin_name, info.name))
+                self.logger.info("weixin public account not found %s:%s" % (info.weixin_name, info.name))
                 continue
-            log.msg("yield request: %s" % url)
+            self.logger.info("yield request: %s" % url)
             yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'oracle_id': info.oracle_id, 'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
 
     def parse_list(self, response):
@@ -89,7 +88,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         :param response:
         :return:
         '''
-        log.msg("parsing list: %s" % response.url)
+        self.logger.info("parsing list: %s" % response.url)
         account_info = response.meta['account_info']
 
         m = re.search(r"var msgList = '{.*}';", response.body)
@@ -112,7 +111,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
 
-            log.msg("yield request: %s" % item['url'])
+            self.logger.info("yield request: %s" % item['url'])
             yield scrapy.Request(url=item['url'], callback=self.parse_item, meta={'item': item})
 
     def parse_item(self, response):
@@ -120,7 +119,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
 
 
         item = response.meta['item']
-        log.msg("parsing item: %s" % item['title'])
+        self.logger.info("parsing item: %s" % item['title'])
         # print("parsing detail page %s ... " % item['title'])
 
         content = response.xpath("//div[@id='page-content']//text()").extract()
@@ -149,7 +148,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
 
         item['read_num'] = read_num
         item['like_num'] = like_num
-        log.msg("%s {'read':%d, 'like':%d} %s, %s" % (
+        self.logger.info("%s {'read':%d, 'like':%d} %s, %s" % (
             item['title'], item['read_num'], item['like_num'], item['pubtime'], item['inserttime']))
         yield item
 
@@ -160,15 +159,15 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信") > -1:
-            log.msg("成功获得列表页.")
+            self.logger.info("成功获得列表页.")
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
-            log.msg("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
+            self.logger.info("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
             self.retry_time = 0
             return False
-        log.msg("未成功获得列表页,将重试...")
-        log.msg()
+        self.logger.info("未成功获得列表页,将重试...")
+        self.logger.info()
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 

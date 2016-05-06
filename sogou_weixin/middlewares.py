@@ -22,8 +22,10 @@
 import re
 import random
 import base64
-from scrapy import log
+import logging
 
+
+logger = logging.getLogger('my_middlewares')
 
 class RandomProxy(object):
     def __init__(self, settings):
@@ -75,12 +77,12 @@ class RandomProxy(object):
                 proxy_user_pass = self.proxies[proxy_address]
 
                 request.meta['proxy'] = proxy_address
-                log.msg("[%s]using proxy %s " % (request.url, proxy_address), level=log.DEBUG)
+                logger.debug("[%s]using proxy %s " % (request.url, proxy_address))
                 if proxy_user_pass:
                     basic_auth = 'Basic ' + base64.encodestring(proxy_user_pass)
                     request.headers['Proxy-Authorization'] = basic_auth
         else:
-            log.msg("[%s]proxy %s " % (request.url, request.meta['proxy']), level=log.DEBUG)
+            logger.debug("[%s]proxy %s " % (request.url, request.meta['proxy']))
 
         # random user-agent
         if "User-Agent" not in request.headers:
@@ -88,9 +90,9 @@ class RandomProxy(object):
                 ua = random.choice(self.uas)
                 if ua:
                     request.headers.setdefault('User-Agent', ua)
-                    log.msg("[%s]using user-agent %s " % (request.url, ua), level=log.DEBUG)
+                    logger.debug("[%s]using user-agent %s " % (request.url, ua))
         else:
-            log.msg("[%s]user-agent %s " % (request.url, request.headers['User-Agent']), level=log.DEBUG)
+            logger.debug("[%s]user-agent %s " % (request.url, request.headers['User-Agent']))
 
         # random cookie
         if len(request.cookies) == 0:
@@ -100,18 +102,17 @@ class RandomProxy(object):
                     for kv in cookie.split(';'):
                         request.cookies[kv.split('=')[0]] = kv.split('=')[1]
                     # request.headers.setdefault('Cookie', cookie)
-                    log.msg("[%s]using Cookie %s " % (request.url, cookie), level=log.DEBUG)
+                    logger.debug("[%s]using Cookie %s " % (request.url, cookie))
         else:
-            # log.msg("cookie %s [%s]" % (request.headers['Cookie'], request.url))
-            log.msg("[%s]cookie %s " % (request.url, request.cookies), level=log.DEBUG)
+            # logger.debug("cookie %s [%s]" % (request.headers['Cookie'], request.url))
+            logger.debug("[%s]cookie %s " % (request.url, request.cookies))
 
-            # log.msg(request.headers)
 
     def process_exception(self, request, exception, spider):
         proxy = request.meta['proxy']
-        log.msg('failed proxy <%s>, %d proxies left' % (
+        logger.info('failed proxy <%s>, %d proxies left' % (
             proxy, len(self.proxies)))
-        # log.msg('Removing failed proxy <%s>, %d proxies left' % (
+        # self.logger.info('Removing failed proxy <%s>, %d proxies left' % (
         # proxy, len(self.proxies)))
         # try:
         #     del self.proxies[proxy]

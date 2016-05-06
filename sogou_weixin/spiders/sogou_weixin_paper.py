@@ -7,7 +7,6 @@ import re
 import time
 
 import scrapy
-from scrapy import log
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
 from sogou_weixin import items
@@ -30,7 +29,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
         for start_url in self.start_urls:
             url_to_get = start_url
             while url_to_get:
-                log.msg("selenium webdriver visiting list page: [%s]" % url_to_get)
+                self.logger.info("selenium webdriver visiting list page: [%s]" % url_to_get)
 
                 try:
                     self.driver_get_or_retry(url_to_get)
@@ -38,8 +37,8 @@ class sogouWeixinPaperSpider(sogou_weixin):
                     list_page_wnd = self.driver.current_window_handle
                 except Exception:
 
-                    log.msg("err while selenium requesting: %s" % url_to_get, _level=log.ERROR)
-                    log.msg(Exception.__str__())
+                    self.logger.error("err while selenium requesting: %s" % url_to_get)
+                    self.logger.info(Exception.__str__())
                     raw_input("waiting for manual conti...")
                     continue
 
@@ -75,17 +74,17 @@ class sogouWeixinPaperSpider(sogou_weixin):
                 # log.msg("list page %s parsed." % url_to_get)
 
                 wait = 15 + 2 * self.get_sleep_time()
-                log.msg("wait %d seconds to get next list page..." % wait)
+                self.logger.info("wait %d seconds to get next list page..." % wait)
                 time.sleep(wait)
                 try:
                     if self.driver.find_element_by_xpath("//a[@id='sogou_next']"):
 
                         url_to_get = self.get_next_url(url_to_get)
                     else:
-                        log.msg("no next page.")
+                        self.logger.info("no next page.")
                         url_to_get = None
                 except NoSuchElementException:
-                    log.msg("no next page.")
+                    self.logger.info("no next page.")
                     url_to_get = None
 
     def get_next_url(self, curr_url):
@@ -95,7 +94,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
         if page_num:
             int_page_num = int(page_num.group(0).replace("&page=", ""))
             if int_page_num >= int(self.settings['MAX_PAGE']):
-                log.msg(
+                self.logger.info(
                     "reach max page count: [curr: %d|max: %s], will stop." % (int_page_num, self.settings['MAX_PAGE']))
                 return None
             nextUrl = re.sub("&page=\d+", "&page=%d" % (int_page_num + 1), curr_url)
@@ -105,7 +104,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
 
     def parse_item(self, response):
         if response.body.find("当前请求已过期") > -1:
-            log.msg("当前请求已过期 %s " % response.url)
+            self.logger.info("当前请求已过期 %s " % response.url)
             return
         item = response.meta['item']
         # print("parsing detail page %s ... " % item['title'])
@@ -136,7 +135,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
 
         item['read_num'] = read_num
         item['like_num'] = like_num
-        log.msg("%s {'read':%d, 'like':%d} %s, %s" % (
+        self.logger.info("%s {'read':%d, 'like':%d} %s, %s" % (
             item['title'], item['read_num'], item['like_num'], item['pubtime'], item['inserttime']))
         yield item
 
@@ -147,15 +146,14 @@ class sogouWeixinPaperSpider(sogou_weixin):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信公众号文章") > -1:
-            log.msg("成功获得列表页.")
+            self.logger.info("成功获得列表页.")
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
-            log.msg("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
+            self.logger.info("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
             self.retry_time = 0
             return False
-        log.msg("未成功获得列表页,将重试...")
-        log.msg()
+        self.logger.info("未成功获得列表页,将重试...")
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 
