@@ -12,13 +12,17 @@ logger = logging.getLogger('my_pipelines')
 
 class SogouPipeline(object):
     def __init__(self, mongo_uri, mongo_db, spider_name):
-        # connection = pymongo.MongoClient("mongodb://guanxiaoda.cn:27017")
+
+        self.mongodb_url = mongo_uri
+        self.mongodb_db_name = mongo_db
+        self.mongodb_collection_name = '%s_info' % spider_name
+
         mongo_uri = "mongodb://%s" % mongo_uri
         connection = pymongo.MongoClient(mongo_uri)
         db = connection[mongo_db]
 
         # self.collection = db['wechat_article_info']
-        self.collection = db['%s_info' % spider_name]
+        self.collection = db[self.mongodb_collection_name]
         # item crawled before
         logger.info("loading crawled items before...")
         self.url_crawled = set()
@@ -68,7 +72,7 @@ class SogouPipeline(object):
         if valid:
             self.collection.insert(dict(item))
             self.url_crawled.add(item['url'])
-            logger.info("item wrote to mongodb %s / %s: %s" % ('wechatdb', 'wechat_article_info', item['title']))
+            logger.info("item wrote to mongodb %s / %s: %s" % (self.mongodb_db_name, self.mongodb_collection_name, item['title']))
         else:
             logger.info("item droped %s " % item['title'])
         return item
