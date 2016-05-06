@@ -8,7 +8,6 @@ import re
 import time
 
 from scrapy import Spider
-from scrapy import log
 from selenium import webdriver
 
 
@@ -16,6 +15,8 @@ class sogou_weixin(Spider):
     def __init__(self, **kwargs):
         self.display = Display(visible=0, size=(1280, 1024))
         self.display.start()
+        self.logger.info("display started.")
+
         # proxies
         self.proxy_list = "proxys.txt"
         fin = open(self.proxy_list)
@@ -33,6 +34,10 @@ class sogou_weixin(Spider):
             self.proxies[parts.group(1) + parts.group(3)] = user_pass
 
         fin.close()
+
+    def close(spider, reason):
+        spider.display.stop()
+        spider.logger.info("display stoped.")
 
     def getNormalDriver(self):
         # self.driver = webdriver.Remote(desired_capabilities=webdriver.DesiredCapabilities.HTMLUNIT)
@@ -54,7 +59,7 @@ class sogou_weixin(Spider):
         profile.update_preferences()
 
         self.driver = webdriver.Firefox(firefox_profile=profile)
-        log.msg("creating driver: [%s] using proxy [%s]" % (self.driver.name, PROXY_ADDRESS))
+        self.logger.info("creating driver: [%s] using proxy [%s]" % (self.driver.name, PROXY_ADDRESS))
         self.driver.maximize_window()
 
     def getWebDriver(self):
