@@ -24,6 +24,7 @@ class wxpublic_info:
         self.weixin_name = weixin_name
         self.category_code = category_code
 
+
     def get_wxpublic_info(self):
         return "%s, %s, %d" % (self.name, self.weixin_name, self.category_code)
 
@@ -34,6 +35,9 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
     search_keywords = None
     start_urls = []
 
+    def __init__(self):
+        self.monitor_accounts_file = "keywords.in"
+
     def start_requests(self):
         '''
 
@@ -43,7 +47,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         self.getWebDriver()
         self.wxpublic_info_list = []
-        with open("keywords.in", "r") as f:
+        with open(self.monitor_accounts_file, "r") as f:
             self.search_keywords = f.readlines()
         for search_key in self.search_keywords:
             if search_key.startswith("#") or not len(search_key): continue
