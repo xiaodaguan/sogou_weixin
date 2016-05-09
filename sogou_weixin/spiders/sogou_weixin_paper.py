@@ -114,7 +114,8 @@ class sogouWeixinPaperSpider(sogou_weixin):
         # nQrcode = response.xpath("//img[@id='js_pc_qr_code_img]/@src").extract()
         # if nQrcode:
         #     qrcode = "http://mp.weixin.qq.com%s" % response.xpath("//img[@id='js_pc_qr_code_img']/@src").extract()[0].encode('utf-8')
-        md5 = hashlib.md5(item['url']).hexdigest()
+
+        md5 = hashlib.md5("%s%s%s"%(item['title'].encode('utf-8'),item['pubtime'].encode('utf-8'),item['weixin_name'].encode('utf-8'))).hexdigest()
         inserttime = time.strftime("%Y-%m-%d %H%M%S")
 
         item['url'] = response.url

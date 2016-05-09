@@ -1,5 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
+
+import pymongo
 from pyvirtualdisplay import Display
 
 import datetime
@@ -11,20 +13,46 @@ from scrapy import Spider
 from selenium import webdriver
 import platform
 
+from scrapy.utils.project import get_project_settings
 
 class sogou_weixin(Spider):
+
     def __init__(self, **kwargs):
 
-        self.client_sys_info = platform.platform().lower()
-        if self.client_sys_info.find("windows") == -1 :
-            self.display = Display(visible=0, size=(1280, 1024))
-            self.display.start()
-            self.logger.info("display started.")
+        settings = get_project_settings()
 
+        self.create_display()
+
+        self.load_proxy_list()
+
+        self.get_item_seen(settings)
+
+    def get_item_seen(self, settings):
+        mongo_uri = "mongodb://%s" % settings['MONGODB_ADDRESS']
+        connection = pymongo.MongoClient(mongo_uri)
+        db = connection[settings['MONGODB_DB']]
+        # self.collection = db['wechat_article_info']
+        self.collection = db['%s_info' % self.name]
+        # item crawled before
+        self.logger.info("loading items seen before...")
+        self.item_seen = set()
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$md5", "count": {"$sum": 1}
+                }
+            }
+        ]
+        result = list(self.collection.aggregate(pipeline))
+        for i, item in enumerate(result):
+            self.item_seen.add(item['_id'])
+            if i % 1000 == 0: print(i)
+        self.logger.info("spider read %d seen items" % len(result))
+
+    def load_proxy_list(self):
         # proxies
         self.proxy_list = "proxys.txt"
         fin = open(self.proxy_list)
-
         self.proxies = {}
         for line in fin.readlines():
             parts = re.match('(\w+://)(\w+:\w+@)?(.+)', line)
@@ -36,13 +64,19 @@ class sogou_weixin(Spider):
                 user_pass = ''
 
             self.proxies[parts.group(1) + parts.group(3)] = user_pass
-
         fin.close()
+
+    def create_display(self):
+        self.client_sys_info = platform.platform().lower()
+        if self.client_sys_info.find("windows") == -1:
+            self.display = Display(visible=0, size=(1280, 1024))
+            self.display.start()
+            self.logger.info("display started.")
 
     def close(spider, reason):
         if spider.client_sys_info.find("windows") == -1 :
             spider.display.stop()
-            spider.logger.info("display stoped.")
+            spider.logger.info("virtual display stoped.")
 
     def getNormalDriver(self):
         # self.driver = webdriver.Remote(desired_capabilities=webdriver.DesiredCapabilities.HTMLUNIT)

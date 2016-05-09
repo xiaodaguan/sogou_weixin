@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import hashlib
-from urllib import unquote
 
-import scrapy
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+import hashlib
 import json
-from sogou_weixin.items import SogouWeixinItem
-from sogou_weixin.spiders.sogou_weixin import sogou_weixin
+import platform
 import re
 import time
 
+import pymongo
+import scrapy
+from pyvirtualdisplay import Display
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+
+from sogou_weixin.items import SogouWeixinItem
+from sogou_weixin.spiders.sogou_weixin import sogou_weixin
+from scrapy.utils.project import get_project_settings
 
 class wxpublic_info:
     oracle_id = 0
@@ -36,6 +40,14 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
     start_urls = []
 
     def __init__(self):
+        settings = get_project_settings()
+
+        self.create_display()
+
+        self.load_proxy_list()
+
+        self.get_item_seen(settings)
+
         self.monitor_accounts_file = "keywords.in"
 
     def start_requests(self):
@@ -115,6 +127,13 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
 
+
+            md5 = hashlib.md5("%s%s%s"%(item['title'].encode('utf-8'),item['pubtime'].encode('utf-8'),item['weixin_name'].encode('utf-8'))).hexdigest()
+            item['md5'] = md5
+
+            if item['md5'] in self.item_seen:
+                continue
+
             self.logger.info("yield request: %s" % item['url'])
             yield scrapy.Request(url=item['url'], callback=self.parse_item, meta={'item': item})
 
@@ -124,20 +143,14 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
 
         item = response.meta['item']
         self.logger.info("parsing item: %s" % item['title'])
-        # print("parsing detail page %s ... " % item['title'])
 
         content = response.xpath("//div[@id='page-content']//text()").extract()
         img_url = response.xpath("//div[@id='page-content']//img/@src").extract()
-        # nQrcode = response.xpath("//img[@id='js_pc_qr_code_img]/@src").extract()
-        # if nQrcode:
-        #     qrcode = "http://mp.weixin.qq.com%s" % response.xpath("//img[@id='js_pc_qr_code_img']/@src").extract()[0].encode('utf-8')
-        md5 = hashlib.md5(item['url']).hexdigest()
         inserttime = time.strftime("%Y-%m-%d %H%M%S")
 
         item['url'] = response.url
         item['content'] = content
         item['img_url'] = img_url
-        item['md5'] = md5
         item['inserttime'] = inserttime
 
         yield scrapy.Request(url=item['url'].encode('utf-8').replace("/s?", "/mp/getcomment?"),
