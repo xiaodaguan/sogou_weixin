@@ -73,7 +73,7 @@ class SogouPipeline(object):
         if valid:
             self.collection.insert(dict(item))
             self.item_crawled.add(item['md5'])
-            logger.info("item wrote to mongodb %s / %s: %s" % (self.mongodb_db_name, self.mongodb_collection_name, item['title']))
+            logger.info("item: %s (kw:%s) wrote to mongodb %s / %s" % ( item['title'],item['search_keyword'],self.mongodb_db_name, self.mongodb_collection_name,))
         else:
             logger.info("item droped %s " % item['title'])
         return item
