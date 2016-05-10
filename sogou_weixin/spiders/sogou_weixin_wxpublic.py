@@ -184,7 +184,6 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             self.retry_time = 0
             return False
         self.logger.info("未成功获得列表页,将重试...")
-        self.logger.info()
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 
