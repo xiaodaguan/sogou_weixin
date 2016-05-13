@@ -22,7 +22,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
     def start_requests(self):
 
         self.getWebDriver()
-        self.search_keywords = self.settings['SEARCH_KEYWORDS_FILE']
+        self.search_keywords = self.settings['SEARCH_KEYWORDS']
         self.start_urls = [('http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % keyword) for keyword in
                            self.search_keywords]
 
