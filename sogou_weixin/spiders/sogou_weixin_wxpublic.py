@@ -34,21 +34,11 @@ class wxpublic_info:
 
 
 class SogouWeixinWxpublicSpider(sogou_weixin):
-    name = "sogou_weixin_wxpublic"
+    name = "testaaa"
 
     search_keywords = None
     start_urls = []
 
-    def __init__(self):
-        settings = get_project_settings()
-
-        self.create_display()
-
-        self.load_proxy_list()
-
-        self.get_item_seen(settings)
-
-        self.monitor_accounts_file = "keywords.in"
 
     def start_requests(self):
         '''
@@ -59,7 +49,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         self.getWebDriver()
         self.wxpublic_info_list = []
-        with open(self.monitor_accounts_file, "r") as f:
+        with open(self.settings['SEARCH_KEYWORDS_FILE'], "r") as f:
             self.search_keywords = f.readlines()
         for search_key in self.search_keywords:
             if search_key.startswith("#") or not len(search_key): continue
@@ -177,7 +167,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信") > -1:
-            self.logger.info("成功获得列表页.")
+            self.logger.info("成功获得列表页.%s" % self.driver.title.encode('utf-8'))
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):

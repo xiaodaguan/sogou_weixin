@@ -175,7 +175,7 @@ class sogou_weixin(Spider):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信公众号文章") > -1:
-            self.logger.info("成功获得列表页.")
+            self.logger.info("成功获得列表页.%s" % self.driver.title.encode('utf-8'))
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):

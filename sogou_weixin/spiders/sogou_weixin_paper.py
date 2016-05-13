@@ -12,9 +12,21 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from sogou_weixin import items
 from sogou_weixin.spiders.sogou_weixin import sogou_weixin
 
+class search_keyword_info:
+    search_keyword = None
+    category_code = 0
+
+    def __init__(self, search_keyword, category_code):
+        self.search_keyword = search_keyword
+        self.category_code = category_code
+
+
+    def get_wxpublic_info(self):
+        return "%s, %d" % (self.search_keyword, self.category_code)
+
 
 class sogouWeixinPaperSpider(sogou_weixin):
-    name = 'sogou_weixin_paper'
+    name = 'testbbb'
 
     search_keywords = []  # see settings
     start_urls = []
@@ -22,12 +34,27 @@ class sogouWeixinPaperSpider(sogou_weixin):
     def start_requests(self):
 
         self.getWebDriver()
-        self.search_keywords = self.settings['SEARCH_KEYWORDS']
+        self.search_keyword_info_list = []
+        with open(self.settings['SEARCH_KEYWORDS_FILE'], "r") as f:
+            self.search_keywords = f.readlines()
+        for search_key in self.search_keywords:
+            if search_key.startswith("#") or not len(search_key): continue
+            search_key = search_key.replace("\n", "")
+            assert len(search_key.split(",")) == 2, "err in keywords.in"
+
+            category_code = int(search_key.split(",")[0])
+            search_keyword = search_key.split(",")[1]
+
+            info = search_keyword_info(search_keyword, category_code)
+            self.search_keyword_info_list.append(info)
+            pass
+
         self.start_urls = [('http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % keyword) for keyword in
                            self.search_keywords]
 
-        for start_url in self.start_urls:
-            url_to_get = start_url
+        for sk_info in self.search_keyword_info_list:
+
+            url_to_get = 'http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % sk_info.search_keyword
             while url_to_get:
                 self.logger.info("selenium webdriver visiting list page: [%s]" % url_to_get)
 
@@ -56,7 +83,9 @@ class sogouWeixinPaperSpider(sogou_weixin):
                         item['brief'] = brief
                         item['weixin_name'] = weixin_name
                         item['pubtime'] = pubtime
-                        item['search_keyword'] = re.search("query=.+?&", url_to_get).group(0).replace("query=", "").replace("&", "")
+                        item['search_keyword'] = sk_info.search_keyword
+                        item['category_code'] = sk_info.category_code
+
                         item['url'] = self.driver.find_element_by_xpath(
                             "//div[@class='txt-box']/h4/a[contains(@id,'title_%d')]" % i).get_attribute("href")
                         item['title'] = self.driver.find_element_by_xpath(
@@ -147,7 +176,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信公众号文章") > -1:
-            self.logger.info("成功获得列表页.")
+            self.logger.info("成功获得列表页.%s" % self.driver.title.encode('utf-8'))
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
