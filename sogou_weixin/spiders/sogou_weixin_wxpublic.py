@@ -126,6 +126,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item['author'] = account_info['name']
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
+            item['search_keyword'] = account_info['name']
 
 
             md5 = hashlib.md5("%s%s%s"%(item['title'].encode('utf-8'),item['pubtime'].encode('utf-8'),item['weixin_name'].encode('utf-8'))).hexdigest()
