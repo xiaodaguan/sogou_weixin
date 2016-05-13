@@ -76,6 +76,7 @@ class sogou_weixin(Spider):
     def close(spider, reason):
         if spider.client_sys_info.find("windows") == -1 :
             spider.display.stop()
+            spider.driver.quit()
             spider.logger.info("virtual display stoped.")
 
     def getNormalDriver(self):
