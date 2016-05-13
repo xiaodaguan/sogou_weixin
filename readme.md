@@ -4,7 +4,7 @@
 
 (ubuntu为例)  
 
-1. 安装Scrapy  
+### 安装Scrapy  
 
 - 安装python, pip(略)  
 
@@ -16,20 +16,20 @@
 - 安装scrapy    
 `sudo apt-get install scrapy`  
   
-2. 无界面系统   
+### 无界面系统   
 - 安装xvfb  
 `sudo apt-get install xvfb`  
 
 - 安装pyvirtualdisplay    
 `sudo pip install pyvirtualdisplay`  
   
-4. 安装浏览器  
+### 安装浏览器  
 `sudo apt-get install firefox`  
 
-5. 下载  
+### 下载  
 `git clone https://github.com/xiaodaguan/sogou_weixin`  
 
-6. 配置&运行 
+### 配置&运行 
 
 python entrypoint.py
 
