@@ -19,6 +19,9 @@
 - 安装pymongo  
 `sudo pip install pymongo`
 
+- 安装selenium  
+`sudo pip install selenium`  
+
 ### 无界面系统   
 - 安装xvfb  
 `sudo apt-get install xvfb`  
