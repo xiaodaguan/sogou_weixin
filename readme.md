@@ -14,7 +14,7 @@
 > windows可能需要安装openssl, pywin32    
 
 - 安装scrapy    
-`sudo apt-get install scrapy`  
+`sudo pip install scrapy`  
   
 ### 无界面系统   
 - 安装xvfb  
