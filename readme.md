@@ -30,8 +30,9 @@
 `git clone https://github.com/xiaodaguan/sogou_weixin`  
 
 ### 配置&运行 
-
-python entrypoint.py
+> 编辑spiders/sogou_weixin_paper or sogou_weixin_wxpublic,修改name,程序会以此作为mongodb的collection名字  
+> 编辑settings.py, 修改SEARCH_KEYWORDS_FILE
+`python entrypoint.py`  
 
 
 
@@ -42,3 +43,7 @@ python entrypoint.py
 ## todo  
 
 分布式  
+
+## 存在的问题  
+
+~[x]程序正常退出后,浏览器不会自动关闭,如果长期运行会累积很多浏览器进程~
