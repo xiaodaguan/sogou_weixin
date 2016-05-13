@@ -19,7 +19,7 @@ NEWSPIDER_MODULE = 'sogou_weixin.spiders'
 # USER_AGENT = 'sogou (+http://www.yourdomain.com)'
 
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.contrib.downloadermiddleware.retry.RetryMiddleware': 90,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': 90,
     # customize
     # 'sogou_weixin.middlewares.RandomProxy': 100,
     # 'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,

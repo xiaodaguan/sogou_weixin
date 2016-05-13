@@ -4,36 +4,43 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
-import pymongo
-from scrapy import log
-from scrapy.exceptions import DropItem
+import hashlib
 
+import pymongo
+from scrapy.exceptions import DropItem
+import logging
+
+logger = logging.getLogger('my_pipelines')
 
 class SogouPipeline(object):
     def __init__(self, mongo_uri, mongo_db, spider_name):
-        # connection = pymongo.MongoClient("mongodb://guanxiaoda.cn:27017")
+
+        self.mongodb_url = mongo_uri
+        self.mongodb_db_name = mongo_db
+        self.mongodb_collection_name = '%s_info' % spider_name
+
         mongo_uri = "mongodb://%s" % mongo_uri
         connection = pymongo.MongoClient(mongo_uri)
         db = connection[mongo_db]
 
         # self.collection = db['wechat_article_info']
-        self.collection = db['%s_info' % spider_name]
+        self.collection = db[self.mongodb_collection_name]
         # item crawled before
-        log.msg("loading crawled items before...")
-        self.url_crawled = set()
+        logger.info("loading crawled items before...")
+        self.item_crawled = set()
         pipeline = [
             {
                 "$group": {
-                    "_id": "$url", "count": {"$sum": 1}
+                    "_id": "$md5", "count": {"$sum": 1}
                 }
             }
         ]
 
         result = list(self.collection.aggregate(pipeline))
         for i, item in enumerate(result):
-            self.url_crawled.add(item['_id'])
+            self.item_crawled.add(item['_id'])
             if i % 1000 == 0: print(i)
-        log.msg("read %d crawled items" % len(result))
+        logger.info("pipline read %d crawled items" % len(result))
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -45,15 +52,14 @@ class SogouPipeline(object):
 
     def process_item(self, item, spider):
 
+        if not item['md5']:
+
+            md5 = hashlib.md5("%s%s%s"%(item['title'].encode('utf-8'),item['pubtime'].encode('utf-8'),item['weixin_name'].encode('utf-8'))).hexdigest()
+            item['md5'] = md5
+
         valid = True
 
-        if item['url'].find("antispider") > -1:
-            valid = False
-            DropItem("ip or cookie blocked %s " % item['title'])
-        if item['url'].find("websearch") > -1:
-            valid = False
-            DropItem("bad item: request parameters incorrect, redirect failed. %s" % item['title'])
-        if item['url'] in self.url_crawled:
+        if item['md5'] in self.item_crawled:
             valid = False
             DropItem("item crawled before %s " % item['title'])
         else:
@@ -66,8 +72,8 @@ class SogouPipeline(object):
 
         if valid:
             self.collection.insert(dict(item))
-            self.url_crawled.add(item['url'])
-            log.msg("item wrote to mongodb %s / %s: %s" % ('wechatdb', 'wechat_article_info', item['title']))
+            self.item_crawled.add(item['md5'])
+            logger.info("item: %s (kw:%s) wrote to mongodb %s / %s" % ( item['title'],item['search_keyword'],self.mongodb_db_name, self.mongodb_collection_name,))
         else:
-            log.msg("item droped %s " % item['title'])
+            logger.info("item droped %s " % item['title'])
         return item

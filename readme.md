@@ -1,8 +1,37 @@
-#readme
+#Readme  
 
-## run  
+## Quick Start   
 
-run entrypoint
+(ubuntu为例)  
+
+1. 安装Scrapy  
+
+- 安装python, pip(略)  
+
+- 安装scrapy依赖  
+`sudo apt-get install python-dev libxml2-dev libxslt1-dev`  
+> 如果不安装会出现gcc编译错误   
+> windows可能需要安装openssl, pywin32    
+
+- 安装scrapy    
+`sudo apt-get install scrapy`  
+  
+2. 无界面系统   
+- 安装xvfb  
+`sudo apt-get install xvfb`  
+
+- 安装pyvirtualdisplay    
+`sudo pip install pyvirtualdisplay`  
+  
+4. 安装浏览器  
+`sudo apt-get install firefox`  
+
+5. 下载  
+`git clone https://github.com/xiaodaguan/sogou_weixin`  
+
+6. 配置&运行 
+
+python entrypoint.py
 
 
 
@@ -10,8 +39,6 @@ run entrypoint
 
 
 
+## todo  
 
-
-## todo
-
-微信公众号监控
+分布式  

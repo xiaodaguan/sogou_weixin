@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import hashlib
-from urllib import unquote
 
-import scrapy
-from scrapy import log
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+import hashlib
 import json
-from sogou_weixin.items import SogouWeixinItem
-from sogou_weixin.spiders.sogou_weixin import sogou_weixin
+import platform
 import re
 import time
 
+import pymongo
+import scrapy
+from pyvirtualdisplay import Display
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+
+from sogou_weixin.items import SogouWeixinItem
+from sogou_weixin.spiders.sogou_weixin import sogou_weixin
+from scrapy.utils.project import get_project_settings
 
 class wxpublic_info:
     oracle_id = 0
@@ -25,6 +28,7 @@ class wxpublic_info:
         self.weixin_name = weixin_name
         self.category_code = category_code
 
+
     def get_wxpublic_info(self):
         return "%s, %s, %d" % (self.name, self.weixin_name, self.category_code)
 
@@ -35,6 +39,17 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
     search_keywords = None
     start_urls = []
 
+    def __init__(self):
+        settings = get_project_settings()
+
+        self.create_display()
+
+        self.load_proxy_list()
+
+        self.get_item_seen(settings)
+
+        self.monitor_accounts_file = "keywords.in"
+
     def start_requests(self):
         '''
 
@@ -44,7 +59,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         self.getWebDriver()
         self.wxpublic_info_list = []
-        with open("keywords.in", "r") as f:
+        with open(self.monitor_accounts_file, "r") as f:
             self.search_keywords = f.readlines()
         for search_key in self.search_keywords:
             if search_key.startswith("#") or not len(search_key): continue
@@ -77,9 +92,9 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             except WebDriverException:
                 url = None
             if not url:
-                log.msg("weixin public account not found %s:%s" % (info.weixin_name, info.name))
+                self.logger.info("weixin public account not found %s:%s" % (info.weixin_name, info.name))
                 continue
-            log.msg("yield request: %s" % url)
+            self.logger.info("yield request: %s" % url)
             yield scrapy.Request(url=url, callback=self.parse_list, meta={'account_info': {'oracle_id': info.oracle_id, 'name': info.name, 'weixin_name': info.weixin_name, 'category_code': info.category_code}})
 
     def parse_list(self, response):
@@ -89,7 +104,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         :param response:
         :return:
         '''
-        log.msg("parsing list: %s" % response.url)
+        self.logger.info("parsing list: %s" % response.url)
         account_info = response.meta['account_info']
 
         m = re.search(r"var msgList = '{.*}';", response.body)
@@ -112,7 +127,14 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
             item['weixin_name'] = account_info['weixin_name']
             item['category_code'] = account_info['category_code']
 
-            log.msg("yield request: %s" % item['url'])
+
+            md5 = hashlib.md5("%s%s%s"%(item['title'].encode('utf-8'),item['pubtime'].encode('utf-8'),item['weixin_name'].encode('utf-8'))).hexdigest()
+            item['md5'] = md5
+
+            if item['md5'] in self.item_seen:
+                continue
+
+            self.logger.info("yield request: %s" % item['url'])
             yield scrapy.Request(url=item['url'], callback=self.parse_item, meta={'item': item})
 
     def parse_item(self, response):
@@ -120,21 +142,15 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
 
 
         item = response.meta['item']
-        log.msg("parsing item: %s" % item['title'])
-        # print("parsing detail page %s ... " % item['title'])
+        self.logger.info("parsing item: %s" % item['title'])
 
         content = response.xpath("//div[@id='page-content']//text()").extract()
         img_url = response.xpath("//div[@id='page-content']//img/@src").extract()
-        # nQrcode = response.xpath("//img[@id='js_pc_qr_code_img]/@src").extract()
-        # if nQrcode:
-        #     qrcode = "http://mp.weixin.qq.com%s" % response.xpath("//img[@id='js_pc_qr_code_img']/@src").extract()[0].encode('utf-8')
-        md5 = hashlib.md5(item['url']).hexdigest()
         inserttime = time.strftime("%Y-%m-%d %H%M%S")
 
         item['url'] = response.url
         item['content'] = content
         item['img_url'] = img_url
-        item['md5'] = md5
         item['inserttime'] = inserttime
 
         yield scrapy.Request(url=item['url'].encode('utf-8').replace("/s?", "/mp/getcomment?"),
@@ -149,7 +165,7 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
 
         item['read_num'] = read_num
         item['like_num'] = like_num
-        log.msg("%s {'read':%d, 'like':%d} %s, %s" % (
+        self.logger.info("%s {'read':%d, 'like':%d} %s, %s" % (
             item['title'], item['read_num'], item['like_num'], item['pubtime'], item['inserttime']))
         yield item
 
@@ -160,15 +176,14 @@ class SogouWeixinWxpublicSpider(sogou_weixin):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信") > -1:
-            log.msg("成功获得列表页.")
+            self.logger.info("成功获得列表页.")
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
-            log.msg("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
+            self.logger.info("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
             self.retry_time = 0
             return False
-        log.msg("未成功获得列表页,将重试...")
-        log.msg()
+        self.logger.info("未成功获得列表页,将重试...")
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 

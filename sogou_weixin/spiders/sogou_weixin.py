@@ -1,5 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
+
+import pymongo
 from pyvirtualdisplay import Display
 
 import datetime
@@ -8,18 +10,49 @@ import re
 import time
 
 from scrapy import Spider
-from scrapy import log
 from selenium import webdriver
+import platform
 
+from scrapy.utils.project import get_project_settings
 
 class sogou_weixin(Spider):
+
     def __init__(self, **kwargs):
-        self.display = Display(visible=0, size=(1280, 1024))
-        self.display.start()
+
+        settings = get_project_settings()
+
+        self.create_display()
+
+        self.load_proxy_list()
+
+        self.get_item_seen(settings)
+
+    def get_item_seen(self, settings):
+        mongo_uri = "mongodb://%s" % settings['MONGODB_ADDRESS']
+        connection = pymongo.MongoClient(mongo_uri)
+        db = connection[settings['MONGODB_DB']]
+        # self.collection = db['wechat_article_info']
+        self.collection = db['%s_info' % self.name]
+        # item crawled before
+        self.logger.info("loading items seen before...")
+        self.item_seen = set()
+        pipeline = [
+            {
+                "$group": {
+                    "_id": "$md5", "count": {"$sum": 1}
+                }
+            }
+        ]
+        result = list(self.collection.aggregate(pipeline))
+        for i, item in enumerate(result):
+            self.item_seen.add(item['_id'])
+            if i % 1000 == 0: print(i)
+        self.logger.info("spider read %d seen items" % len(result))
+
+    def load_proxy_list(self):
         # proxies
         self.proxy_list = "proxys.txt"
         fin = open(self.proxy_list)
-
         self.proxies = {}
         for line in fin.readlines():
             parts = re.match('(\w+://)(\w+:\w+@)?(.+)', line)
@@ -31,8 +64,19 @@ class sogou_weixin(Spider):
                 user_pass = ''
 
             self.proxies[parts.group(1) + parts.group(3)] = user_pass
-
         fin.close()
+
+    def create_display(self):
+        self.client_sys_info = platform.platform().lower()
+        if self.client_sys_info.find("windows") == -1:
+            self.display = Display(visible=0, size=(1280, 1024))
+            self.display.start()
+            self.logger.info("display started.")
+
+    def close(spider, reason):
+        if spider.client_sys_info.find("windows") == -1 :
+            spider.display.stop()
+            spider.logger.info("virtual display stoped.")
 
     def getNormalDriver(self):
         # self.driver = webdriver.Remote(desired_capabilities=webdriver.DesiredCapabilities.HTMLUNIT)
@@ -54,7 +98,7 @@ class sogou_weixin(Spider):
         profile.update_preferences()
 
         self.driver = webdriver.Firefox(firefox_profile=profile)
-        log.msg("creating driver: [%s] using proxy [%s]" % (self.driver.name, PROXY_ADDRESS))
+        self.logger.info("creating driver: [%s] using proxy [%s]" % (self.driver.name, PROXY_ADDRESS))
         self.driver.maximize_window()
 
     def getWebDriver(self):
@@ -130,15 +174,15 @@ class sogou_weixin(Spider):
         '''
         page_source = self.driver.page_source
         if page_source.find(u"的相关微信公众号文章") > -1:
-            log.msg("成功获得列表页.")
+            self.logger.info("成功获得列表页.")
             return False
 
         if self.retry_time > int(self.settings['MAX_RETRY']):
-            log.msg("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
+            self.logger.info("超过最大重试次数 %s" % self.settings['MAX_RETRY'])
             self.retry_time = 0
             return False
-        log.msg("未成功获得列表页,将重试...")
-        log.msg()
+        self.logger.info("未成功获得列表页,将重试...")
+        self.logger.info()
 
         text = raw_input("请前往浏览器查看原因，如被限制，请解禁后按回车继续...")
 
@@ -152,7 +196,7 @@ class sogou_weixin(Spider):
 
         self.retry_time = 0
         while self.need_retry_list():
-            log.msg("retrying... [%d]" % self.retry_time)
+            self.logger.info("retrying... [%d]" % self.retry_time)
             self.retry_time += 1
 
             self.driver.get(url_to_get)
