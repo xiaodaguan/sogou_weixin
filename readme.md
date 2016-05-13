@@ -14,14 +14,8 @@
 > windows可能需要安装openssl, pywin32    
 
 - 安装scrapy    
-`sudo apt-get install scrapy`  
-
-- 安装pymongo  
-`sudo pip install pymongo`
-
-- 安装selenium  
-`sudo pip install selenium`  
-
+`sudo pip install scrapy`  
+  
 ### 无界面系统   
 - 安装xvfb  
 `sudo apt-get install xvfb`  
