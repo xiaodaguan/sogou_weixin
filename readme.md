@@ -15,7 +15,10 @@
 
 - 安装scrapy    
 `sudo apt-get install scrapy`  
-  
+
+- 安装pymongo  
+`sudo pip install pymongo`
+
 ### 无界面系统   
 - 安装xvfb  
 `sudo apt-get install xvfb`  
