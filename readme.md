@@ -31,9 +31,12 @@
 
 ### 配置&运行 
 > 编辑spiders/sogou_weixin_paper or sogou_weixin_wxpublic,修改name,程序会以此作为mongodb的collection名字  
-> 编辑settings.py, 修改SEARCH_KEYWORDS_FILE
-`python entrypoint.py`  
+> 编辑settings.py, 修改SEARCH_KEYWORDS_FILE  
 
+执行命令:  
+`scrapy crawl {{上面spider中的name}}`  
+or 运行python文件:  
+`python entrypoint.py`(编辑其中命令同上)  
 
 
 
