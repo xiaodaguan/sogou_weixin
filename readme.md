@@ -15,7 +15,11 @@
 
 - 安装scrapy    
 `sudo pip install scrapy`  
-  
+- 安装selenium  
+`sudo pip install selenium`
+- 安装pymongo  
+`sudo pip install pymongo`  
+
 ### 无界面系统   
 - 安装xvfb  
 `sudo apt-get install xvfb`  
