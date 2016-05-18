@@ -42,7 +42,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
             search_key = search_key.replace("\n", "")
             assert len(search_key.split(",")) == 2, "err in keywords.in"
 
-            category_code = int(search_key.split(",")[0])
+            category_code = int(search_key.split(",")[0]) if search_key.split(",")[0] != '' else 0
             search_keyword = search_key.split(",")[1]
 
             info = search_keyword_info(search_keyword, category_code)
