@@ -33,11 +33,21 @@
 ### 下载  
 `git clone https://github.com/xiaodaguan/sogou_weixin`  
 
+
+
 ### 配置&运行 
 > 编辑spiders/sogou_weixin_paper or sogou_weixin_wxpublic,修改name,程序会以此作为mongodb的collection名字  
 > 编辑settings.py, 修改SEARCH_KEYWORDS_FILE  
 
-### 使用代理
+
+
+执行命令:  
+`scrapy crawl {{上面spider中的name}}`  
+or 运行python文件:  
+`python entrypoint.py`(编辑其中命令同上)  
+
+
+#### 使用代理
 添加到proxys.txt，每行一个  
 编辑setting.py，修改：  
 ```
@@ -49,14 +59,6 @@ DOWNLOADER_MIDDLEWARES = {
 }
 ```
 取消后两行的注释  
-
-执行命令:  
-`scrapy crawl {{上面spider中的name}}`  
-or 运行python文件:  
-`python entrypoint.py`(编辑其中命令同上)  
-
-
-
 
 
 
