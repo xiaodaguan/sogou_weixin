@@ -37,6 +37,19 @@
 > 编辑spiders/sogou_weixin_paper or sogou_weixin_wxpublic,修改name,程序会以此作为mongodb的collection名字  
 > 编辑settings.py, 修改SEARCH_KEYWORDS_FILE  
 
+### 使用代理
+添加到proxys.txt，每行一个  
+编辑setting.py，修改：  
+```
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': 90,
+    # customize
+    # 'sogou_weixin.middlewares.RandomProxy': 100,
+    # 'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+}
+```
+取消后两行的注释  
+
 执行命令:  
 `scrapy crawl {{上面spider中的name}}`  
 or 运行python文件:  
