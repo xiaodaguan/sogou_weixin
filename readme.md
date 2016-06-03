@@ -1,5 +1,8 @@
 #Readme  
 
+## Introduction  
+以搜狗微信搜索为入口，爬取微信公众号文章(阅读数、点赞数)  
+
 ## Quick Start   
 
 (ubuntu为例)  
