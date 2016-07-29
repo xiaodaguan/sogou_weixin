@@ -53,9 +53,10 @@ class sogouWeixinPaperSpider(sogou_weixin):
                            self.search_keywords]
 
         for sk_info in self.search_keyword_info_list:
-
+            #each keyword
             url_to_get = 'http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % sk_info.search_keyword
             while url_to_get:
+                #each page
                 self.logger.info("selenium webdriver visiting list page: [%s]" % url_to_get)
 
                 try:
@@ -70,6 +71,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
                     continue
 
                 for i in range(0, 10):
+                    #each item
                     try:
                         brief = self.driver.find_element_by_xpath("//div[@class='txt-box']/p[contains(@id,'summary_%d')]" % i).text
                         weixin_name = self.driver.find_element_by_xpath("//div[contains(@id,'box_%d')]/div[@class='txt-box']/div[@class='s-p']/a[@id='weixin_account']" % i).get_attribute("title")
@@ -92,7 +94,7 @@ class sogouWeixinPaperSpider(sogou_weixin):
                             "//div[@class='txt-box']/h4/a[contains(@id,'title_%d')]" % i).text
 
                         meta = {'item': item}
-
+                        self.logger.info("detai page task %s add to task queue." % item['url'])
                         yield scrapy.Request(url=item['url'], callback=self.parse_item, meta=meta)
 
                     except NoSuchElementException:
