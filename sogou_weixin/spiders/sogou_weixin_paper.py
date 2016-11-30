@@ -26,7 +26,7 @@ class search_keyword_info:
 
 
 class sogouWeixinPaperSpider(sogou_weixin):
-    name = 'testbbb'
+    name = 'wechat_article'
 
     search_keywords = []  # see settings
     start_urls = []
@@ -49,12 +49,12 @@ class sogouWeixinPaperSpider(sogou_weixin):
             self.search_keyword_info_list.append(info)
             pass
 
-        self.start_urls = [('http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % keyword) for keyword in
-                           self.search_keywords]
+        # self.start_urls = [('http://weixin.sogou.com/weixin?query=%s&type=2&tsn=1' % keyword) for keyword in
+        #                    self.search_keywords]
 
         for sk_info in self.search_keyword_info_list:
 
-            url_to_get = 'http://weixin.sogou.com/weixin?query=%s&type=2&tsn=2' % sk_info.search_keyword
+            url_to_get = 'http://weixin.sogou.com/weixin?query=%s&type=2&tsn=1' % sk_info.search_keyword
             while url_to_get:
                 self.logger.info("selenium webdriver visiting list page: [%s]" % url_to_get)
 
@@ -70,35 +70,52 @@ class sogouWeixinPaperSpider(sogou_weixin):
                     continue
 
                 for i in range(0, 10):
+                    brief=""
+                    weixin_name=""
+                    str_pubtime=""
+                    pubtime=""
+
                     try:
                         brief = self.driver.find_element_by_xpath("//div[@class='txt-box']/p[contains(@id,'summary_%d')]" % i).text
-                        weixin_name = self.driver.find_element_by_xpath("//div[contains(@id,'box_%d')]/div[@class='txt-box']/div[@class='s-p']/a[@id='weixin_account']" % i).get_attribute("title")
-                        str_pubtime = self.driver.find_element_by_xpath("//div[contains(@id,'box_%d')]/div[@class='txt-box']/div[@class='s-p']/span[@class='time']" % i).text.encode('utf-8')
-                        pubtime = self.switch_time(str_pubtime)
-
-                        item = items.SogouWeixinItem()
-                        item['crawler'] = self.name
-
-                        # item['page_source'] = html
-                        item['brief'] = brief
-                        item['weixin_name'] = weixin_name
-                        item['pubtime'] = pubtime
-                        item['search_keyword'] = sk_info.search_keyword
-                        item['category_code'] = sk_info.category_code
-
-                        item['url'] = self.driver.find_element_by_xpath(
-                            "//div[@class='txt-box']/h4/a[contains(@id,'title_%d')]" % i).get_attribute("href")
-                        item['title'] = self.driver.find_element_by_xpath(
-                            "//div[@class='txt-box']/h4/a[contains(@id,'title_%d')]" % i).text
-
-                        meta = {'item': item}
-
-                        yield scrapy.Request(url=item['url'], callback=self.parse_item, meta=meta)
-
                     except NoSuchElementException:
-                        print("element not found while parsing detail page %d" % i)
+                        print("brief not found while parsing detail page %d" % i)
                     except WebDriverException:
                         print("web driver exception %d" % i)
+                    try:
+                        weixin_name = self.driver.find_element_by_xpath("//li[contains(@id,'box_%d')]/div[@class='txt-box']/div[@class='s-p']/a[@data-sourcename]" % i).get_attribute("data-sourcename")
+                    except NoSuchElementException:
+                        print("weixin_name not found while parsing detail page %d" % i)
+                    except WebDriverException:
+                        print("web driver exception %d" % i)
+                    try:
+                        str_pubtime = self.driver.find_element_by_xpath("//li[contains(@id,'box_%d')]/div[@class='txt-box']/div[@class='s-p']/span[@class='s2']" % i).text.encode('utf-8')
+                        pubtime = self.switch_time(str_pubtime)
+                    except NoSuchElementException:
+                        print("str_pubtime not found while parsing detail page %d" % i)
+                    except WebDriverException:
+                        print("web driver exception %d" % i)
+
+
+
+                    item = items.SogouWeixinItem()
+                    item['crawler'] = self.name
+
+                    # item['page_source'] = html
+                    item['brief'] = brief
+                    item['weixin_name'] = weixin_name
+                    item['pubtime'] = pubtime
+                    item['search_keyword'] = sk_info.search_keyword
+                    item['category_code'] = sk_info.category_code
+
+                    item['url'] = self.driver.find_element_by_xpath(
+                        "//div[@class='txt-box']/h3/a[contains(@id,'title_%d')]" % i).get_attribute("href")
+                    item['title'] = self.driver.find_element_by_xpath(
+                        "//div[@class='txt-box']/h3/a[contains(@id,'title_%d')]" % i).text
+
+                    meta = {'item': item}
+                    if item['url']:
+                        yield scrapy.Request(url=item['url'], callback=self.parse_item, meta=meta)
+
 
                 # log.msg("list page %s parsed." % url_to_get)
 
