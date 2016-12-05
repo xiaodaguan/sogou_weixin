@@ -6,6 +6,6 @@ import os
 
 
 # execute(['scrapy', 'crawl', 'testaaa'])
-execute(['scrapy', 'crawl', 'testbbb'])
+execute(['scrapy', 'crawl', 'wechat_article'])
 
 # execute(['scrapy','genspider','sogou_weixin_wxpublic','sogou.com'])
